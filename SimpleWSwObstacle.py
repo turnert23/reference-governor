@@ -19,6 +19,8 @@ def vfPlanner(xg,xstar, world, robot):
 def controller(x,xdot, xg, xstar,  world, robot, cparams):
     kappa, kg, eta = cparams
     obs = world.obstacles
+    lineToHip = (x - xg) / np.linalg.norm(x-xg) if np.linalg.norm(x-xg) != 0 else 0  
+    minWsGoal = xg + 1.0 * lineToHip
     fx = -2. * kappa*(x-xg) - eta * xdot 
     r = vfPlanner(xg, xstar, world, robot)
     # r = -((2. * nbeta * (xg-xstar) - 1./k * np.linalg.norm(xg - xstar)**2 * ngradbeta )/ ((np.linalg.norm(xg-xstar)**(2. * k) + nbeta)**(1./k +1)))
@@ -26,7 +28,7 @@ def controller(x,xdot, xg, xstar,  world, robot, cparams):
     deltaE = kappa * (closestCircPoint(world.center, world.radius, xg) - robot.radius )**2 - EofX #np.linalg.norm(closestCircPoint(world.center,world.radius,xg)-xg)**2 - EofX
     # r = 0.5 * (xstar - xg)
     minTerm = min(np.linalg.norm(r), np.sqrt(deltaE)/kappa)
-    gx = kg *  r/ np.linalg.norm(r) * minTerm
+    gx = kg *  r/ np.linalg.norm(r) * minTerm if np.linalg.norm(r) != 0 else np.array([0.,0.])
     return (fx,gx) 
 
 def dynamics(q,t,params):
@@ -37,14 +39,14 @@ def dynamics(q,t,params):
     fx, gx = controller(x,xdot,xg,xstar, world, robot, cparams)
     return [xdot[0], xdot[1], fx[0], fx[1], gx[0], gx[1]]
 
-q0 = [4.,3.5,0.,0.,4.,3.5]
+q0 = [5.8,0.0,0.,0.,5.2,0.0]
 tStop = 2000
 tInc = 0.05
 t = np.arange(0., tStop, tInc)
 obsts = [] # ((np.array([2.5,1.25]),0.5),(np.array([3.0,3.0]),0.5))
 world = CircleWorld(np.array([0.,0.]), 6., obsts)
 robot = Robot(0.2)
-goal = np.array([-5.0, 0.])
+goal = np.array([-4.0, -2.0])
 kappa = 1.
 kg = 2.
 eta = 1.
@@ -80,7 +82,8 @@ def getMagGrid(U,V):
     return Z
 
 fig = plt.figure()
-fig.set_size_inches(7,6.5)
+plt.style.use('dark_background')
+
 ax = world.plot(fig)
 
 def init():

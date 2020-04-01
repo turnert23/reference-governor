@@ -34,9 +34,9 @@ class CircleWorld(World):
     def __init__(self, center, radius, obstacles=[]):
         super().__init__(center, obstacles)
         self.radius = radius
-        self.wpatch = plt.Circle((center), radius = radius, fc= 'none', ec = 'k', ls= '-' )
+        self.wpatch = plt.Circle((center), radius = radius, fc= 'none', ec = 'm', ls= '-', linewidth=2.0 )
     def plot(self, fig):
-        ax = plt.axes(xlim=(-self.radius, self.radius), ylim=(-self.radius , self.radius))
+        ax = plt.axes(xlim=(-self.radius-1, self.radius+1), ylim=(-self.radius-1 , self.radius+1))
         ax.add_patch(self.wpatch)
         for obp in self.obspatches:
             ax.add_patch(obp)

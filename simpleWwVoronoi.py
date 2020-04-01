@@ -3,47 +3,6 @@ import string
 import bisect
 from simObjects import *
 
-def govController(state, environment, goal, cparams):   
-    x = state[0:2]
-    xdot = state[2:4]
-    xg = state[4:]
-    rbt = environment.robot
-    wrld = environment.world
-    kappa, kg, eta = cparams
-    fx = -2. * kappa*(x-xg) - eta * xdot 
-    numer  =   10. * np.linalg.norm(xg-goal)**2
-    gradnumer = 2. * 10. * (xg - goal)
-    denom = np.linalg.norm(xg-goal)**2 + (wrld.radius - rbt.radius)**2 - np.linalg.norm(xg-wrld.center)**2
-    graddenom = 2. * (wrld.center - goal)
-    r = -(denom * gradnumer  - graddenom * numer) / (denom**2) 
-    EofX = (0.5 * np.linalg.norm(xdot)**2 + kappa * np.linalg.norm(x-xg)**2)
-    deltaE = kappa * (closestCircPoint(wrld.center,wrld.radius,xg) - 0.2 )**2 - EofX 
-    minTerm = min(np.linalg.norm(r), np.sqrt(deltaE)/kappa)
-    gx = kg *  r/ np.linalg.norm(r) * minTerm
-    return (fx,gx) 
-
-def dynamics(q,t, params):
-    ctrlr, env = params
-    xstar = ctrlr.goal
-    cfunc = ctrlr.function 
-    cparams = ctrlr.params
-    fx, gx = cfunc(q, env, xstar, cparams)
-    return [q[2], q[3], fx[0], fx[1], gx[0], gx[1]]
-
-goal = np.array([-7.0, -4.])
-gains = (1., 2., 1.) #kappa, kg, eta
-ctrlr = Controller(govController, goal, gains)
-world = CircleWorld(np.array([0.,0.]), 7.0)
-robot = Robot()
-sim = Simulation(world, robot, ctrlr, dynamics)
-
-q0 = [4.,3.5,0.,0.,4.,3.5]
-tStop = 2000
-tInc = 0.05
-sim.run(q0, tStop, tInc)
-sim.show()
-
-
 def sensorBoundary(x, world, theta):
     if (world.type == 'circle'):
         b = 2. * (np.cos(theta) * x[0] + np.sin(theta) * x[1])
@@ -86,3 +45,50 @@ def sensorObstacle(x, world, theta):
 
 def sensor(x, world, theta):
     return min(sensorObstacle(x,world,theta), sensorBoundary(x,world,theta))
+
+def govController(state, environment, goal, cparams):   
+    x = state[0:2]
+    xdot = state[2:4]
+    xg = state[4:]
+    rbt = environment.robot
+    wrld = environment.world
+    kappa, kg, eta = cparams
+    fx = -2. * kappa * (x-xg) - eta * xdot 
+    numer  =   10. * np.linalg.norm(xg-goal)**2
+    gradnumer = 2. * 10. * (xg - goal)
+    denom = np.linalg.norm(xg-goal)**2 + (wrld.radius - rbt.radius)**2 - np.linalg.norm(xg-wrld.center)**2
+    graddenom = 2. * (wrld.center - goal)
+    r = -(denom * gradnumer  - graddenom * numer) / (denom**2) 
+    EofX = (0.5 * np.linalg.norm(xdot)**2 + kappa * np.linalg.norm(x-xg)**2)
+    deltaE = kappa * (closestCircPoint(wrld.center,wrld.radius,xg) - 0.2 )**2 - EofX 
+    minTerm = min(np.linalg.norm(r), np.sqrt(deltaE)/kappa)
+    gx = kg *  r/ np.linalg.norm(r) * minTerm
+    return (fx,gx) 
+
+def dynamics(q,t, params):
+    ctrlr, env = params
+    xstar = ctrlr.goal
+    cfunc = ctrlr.function 
+    cparams = ctrlr.params
+    fx, gx = cfunc(q, env, xstar, cparams)
+    return [q[2], q[3], fx[0], fx[1], gx[0], gx[1]]
+
+goal = np.array([-3.0, -2.])
+gains = (1., 2., 1.) #kappa, kg, eta
+ctrlr = Controller(govController, goal, gains)
+
+world = CircleWorld(np.array([0.,0.]), 7.0)
+
+robot = Robot()
+
+sim = Simulation(world, robot, ctrlr, dynamics)
+
+q0 = [4.,3.5,0.,0.,4.,3.5]
+tStop = 2000
+tInc = 0.05
+
+sim.run(q0, tStop, tInc)
+sim.show()
+
+
+
